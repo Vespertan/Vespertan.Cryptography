@@ -44,5 +44,31 @@ namespace Vespertan.Cryptography.Tests
             Assert.AreEqual(data, outData);
 
         }
+
+        [TestMethod()]
+        public void EncryptDataAesTest()
+        {
+            var salt = new byte[] { 3, 4 };
+            CryptoStrings.EncryptAes(new byte[] { 1 }, new byte[] { 2, 3 }, ref salt);
+        }
+
+        [TestMethod()]
+        public void DecryptDataAesTest()
+        {
+            var data = new byte[] { 1, 2 };
+            var salt = new byte[] { 3, 4 };
+            var hash = CryptoStrings.EncryptAes(data, new byte[] { 2, 3 }, ref salt);
+            var decrypted = CryptoStrings.DecryptAes(hash, new byte[] { 2, 3 }, new byte[] { 3, 4 });
+            CollectionAssert.AreEqual(decrypted, data);
+        }
+
+        [TestMethod()]
+        public void EncryptDataAesHashTest()
+        {
+            var message = "crypto message";
+            var cs = CryptoStrings.GetAesCryptoString(message, "pass");
+            var roundtrip = CryptoStrings.DecryptAesText(cs, "pass");
+            Assert.AreEqual(message, roundtrip);
+        }
     }
 }
