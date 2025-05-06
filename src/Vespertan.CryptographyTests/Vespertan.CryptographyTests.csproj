@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net461</TargetFramework>
@@ -15,6 +15,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Vespertan.Cryptography\Vespertan.Cryptography.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="certificate.crt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="cert_with_key.pfx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

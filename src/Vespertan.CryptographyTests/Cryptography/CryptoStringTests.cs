@@ -33,7 +33,7 @@ namespace Vespertan.Cryptography.Tests
         {
             var message = "crypto message";
             var cs = CryptoStrings.GetAesString(message, "pass");
-            var roundtrip = CryptoStrings.GetDecryptedAesText(cs, "pass");
+            var roundtrip = CryptoStrings.DecryptAesText(cs, "pass");
             Assert.AreEqual(message, roundtrip);
         }
 
