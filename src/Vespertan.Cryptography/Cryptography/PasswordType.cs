@@ -17,5 +17,6 @@ namespace Vespertan.Cryptography
         Sha512Salt = 10,
         Aes = 11,
         Cert = 12,
+        Sign = 13,
     }
 }

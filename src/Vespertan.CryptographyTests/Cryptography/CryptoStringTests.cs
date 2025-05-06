@@ -32,7 +32,7 @@ namespace Vespertan.Cryptography.Tests
         public void EncryptDataAesHashTest()
         {
             var message = "crypto message";
-            var cs = CryptoStrings.GetAesString(message, "pass");
+            var cs = CryptoStrings.GetAesCryptoString(message, "pass");
             var roundtrip = CryptoStrings.DecryptAesText(cs, "pass");
             Assert.AreEqual(message, roundtrip);
         }

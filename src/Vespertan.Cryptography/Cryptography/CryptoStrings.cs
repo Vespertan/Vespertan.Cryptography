@@ -144,105 +144,105 @@ namespace Vespertan.Cryptography
 
         #region Strings
 
-        public static string GetMd5String(string password)
+        public static string GetMd5CryptoString(string password)
         {
             var data = Encoding.UTF8.GetBytes(password);
             var hash = HashMd5(data);
             return $"${PasswordType.Md5}${Convert.ToBase64String(hash)}";
         }
 
-        public static string GetMd5SaltedString(string password, int saltLength)
+        public static string GetMd5SaltedCryptoString(string password, int saltLength)
         {
             var salt = GetRandomBytes(saltLength);
-            return GetMd5SaltedString(password, salt);
+            return GetMd5SaltedCryptoString(password, salt);
         }
 
-        public static string GetMd5SaltedString(string password, byte[] salt)
+        public static string GetMd5SaltedCryptoString(string password, byte[] salt)
         {
             var data = ConcateArray(Encoding.UTF8.GetBytes(password), salt);
             var hash = HashMd5(data);
             return $"${PasswordType.Md5Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
         }
 
-        public static string GetNoneString(string password)
+        public static string GetNoneCryptoString(string password)
         {
             return $"${PasswordType.None}${password}";
         }
 
-        public static string GetSha1String(string password)
+        public static string GetSha1CryptoString(string password)
         {
             var data = Encoding.UTF8.GetBytes(password);
             var hash = HashSha1(data);
             return $"${PasswordType.Sha1}${Convert.ToBase64String(hash)}";
         }
 
-        public static string GetSha1SaltedString(string password, int saltLength)
+        public static string GetSha1SaltedCryptoString(string password, int saltLength)
         {
             var salt = GetRandomBytes(saltLength);
-            return GetSha1SaltedString(password, salt);
+            return GetSha1SaltedCryptoString(password, salt);
         }
 
-        public static string GetSha1SaltedString(string password, byte[] salt)
+        public static string GetSha1SaltedCryptoString(string password, byte[] salt)
         {
             var data = ConcateArray(Encoding.UTF8.GetBytes(password), salt);
             var hash = HashSha1(data);
             return $"${PasswordType.Sha1Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
         }
 
-        public static string GetSha256String(string password)
+        public static string GetSha256CryptoString(string password)
         {
             var data = Encoding.UTF8.GetBytes(password);
             var hash = HashSha256(data);
             return $"${PasswordType.Sha256}${Convert.ToBase64String(hash)}";
         }
 
-        public static string GetSha256SaltedString(string password, int saltLength)
+        public static string GetSha256SaltedCryptoString(string password, int saltLength)
         {
             var salt = GetRandomBytes(saltLength);
-            return GetSha256SaltedString(password, salt);
+            return GetSha256SaltedCryptoString(password, salt);
         }
 
-        public static string GetSha256SaltedString(string password, byte[] salt)
+        public static string GetSha256SaltedCryptoString(string password, byte[] salt)
         {
             var data = ConcateArray(Encoding.UTF8.GetBytes(password), salt);
             var hash = HashSha256(data);
             return $"${PasswordType.Sha256Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
         }
 
-        public static string GetSha384String(string password)
+        public static string GetSha384CryptoString(string password)
         {
             var data = Encoding.UTF8.GetBytes(password);
             var hash = HashSha384(data);
             return $"${PasswordType.Sha384}${Convert.ToBase64String(hash)}";
         }
 
-        public static string GetSha384SaltedString(string password, int saltLength)
+        public static string GetSha384SaltedCryptoString(string password, int saltLength)
         {
             var salt = GetRandomBytes(saltLength);
-            return GetSha384SaltedString(password, salt);
+            return GetSha384SaltedCryptoString(password, salt);
         }
 
-        public static string GetSha384SaltedString(string password, byte[] salt)
+        public static string GetSha384SaltedCryptoString(string password, byte[] salt)
         {
             var data = ConcateArray(Encoding.UTF8.GetBytes(password), salt);
             var hash = HashSha384(data);
             return $"${PasswordType.Sha384Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
         }
 
-        public static string GetSha512String(string password)
+        public static string GetSha512CryptoString(string password)
         {
             var data = Encoding.UTF8.GetBytes(password);
             byte[] hash = HashSha512(data);
             return $"${PasswordType.Sha512}${Convert.ToBase64String(hash)}";
         }
 
-        public static string GetSha512SaltedString(string password)
+        public static string GetSha512SaltedCryptoString(string password)
         {
             var salt = GetRandomBytes(Aes.Create().KeySize / 8);
-            return GetSha512SaltedString(password, salt);
+            return GetSha512SaltedCryptoString(password, salt);
         }
 
-        public static string GetSha512SaltedString(string password, byte[] salt)
+        public static string GetSha512SaltedCryptoString(string password, byte[] salt)
         {
             var data = ConcateArray(Encoding.UTF8.GetBytes(password), salt);
             byte[] hash = HashSha512(data);
@@ -251,46 +251,46 @@ namespace Vespertan.Cryptography
 
         #region AES string
 
-        public static string GetAesString(string data, string password)
+        public static string GetAesCryptoString(string data, string password)
         {
             var salt = GetRandomBytes(Aes.Create().KeySize / 8);
-            return GetAesString(Encoding.UTF8.GetBytes(data), Encoding.UTF8.GetBytes(password), salt);
+            return GetAesCryptoString(Encoding.UTF8.GetBytes(data), Encoding.UTF8.GetBytes(password), salt);
         }
 
-        public static string GetAesString(string data, string password, byte[] salt)
+        public static string GetAesCryptoString(string data, string password, byte[] salt)
         {
-            return GetAesString(Encoding.UTF8.GetBytes(data), Encoding.UTF8.GetBytes(password), salt);
+            return GetAesCryptoString(Encoding.UTF8.GetBytes(data), Encoding.UTF8.GetBytes(password), salt);
         }
 
-        public static string GetAesString(string data, byte[] password)
-        {
-            var salt = GetRandomBytes(Aes.Create().KeySize / 8);
-            return GetAesString(Encoding.UTF8.GetBytes(data), password, salt);
-        }
-
-        public static string GetAesString(string data, byte[] password, byte[] salt)
-        {
-            return GetAesString(Encoding.UTF8.GetBytes(data), password, salt);
-        }
-
-        public static string GetAesString(byte[] data, string password)
+        public static string GetAesCryptoString(string data, byte[] password)
         {
             var salt = GetRandomBytes(Aes.Create().KeySize / 8);
-            return GetAesString(data, Encoding.UTF8.GetBytes(password), salt);
+            return GetAesCryptoString(Encoding.UTF8.GetBytes(data), password, salt);
         }
 
-        public static string GetAesString(byte[] data, string password, byte[] salt)
+        public static string GetAesCryptoString(string data, byte[] password, byte[] salt)
         {
-            return GetAesString(data, Encoding.UTF8.GetBytes(password), salt);
+            return GetAesCryptoString(Encoding.UTF8.GetBytes(data), password, salt);
         }
 
-        public static string GetAesString(byte[] data, byte[] password)
+        public static string GetAesCryptoString(byte[] data, string password)
         {
             var salt = GetRandomBytes(Aes.Create().KeySize / 8);
-            return GetAesString(data, password, salt);
+            return GetAesCryptoString(data, Encoding.UTF8.GetBytes(password), salt);
         }
 
-        public static string GetAesString(byte[] data, byte[] password, byte[] salt)
+        public static string GetAesCryptoString(byte[] data, string password, byte[] salt)
+        {
+            return GetAesCryptoString(data, Encoding.UTF8.GetBytes(password), salt);
+        }
+
+        public static string GetAesCryptoString(byte[] data, byte[] password)
+        {
+            var salt = GetRandomBytes(Aes.Create().KeySize / 8);
+            return GetAesCryptoString(data, password, salt);
+        }
+
+        public static string GetAesCryptoString(byte[] data, byte[] password, byte[] salt)
         {
             var encryptedData = EncryptAes(data, password, ref salt);
             return $"${PasswordType.Aes}${Convert.ToBase64String(encryptedData)}${Convert.ToBase64String(salt)}";
@@ -337,18 +337,18 @@ namespace Vespertan.Cryptography
             return decryptedValue;
         }
 
-        public static string GetCertString(string text, X509Certificate2 certificate2)
+        public static string GetCertCryptoString(string text, X509Certificate2 certificate2)
         {
-                using var rsa = certificate2.GetRSAPublicKey();
-                return GetCertString(Encoding.UTF8.GetBytes(text), rsa, certificate2.Thumbprint);
+            using var rsa = certificate2.GetRSAPublicKey();
+            return GetCertCryptoString(Encoding.UTF8.GetBytes(text), rsa, certificate2.Thumbprint);
         }
 
-        public static string GetCertString(string text, RSA publicKey, string thumbprint = null)
+        public static string GetCertCryptoString(string text, RSA publicKey, string thumbprint = null)
         {
-            return GetCertString(Encoding.UTF8.GetBytes(text), publicKey, thumbprint);
+            return GetCertCryptoString(Encoding.UTF8.GetBytes(text), publicKey, thumbprint);
         }
 
-        public static string GetCertString(byte[] data, RSA publicKey, string thumbprint = null)
+        public static string GetCertCryptoString(byte[] data, RSA publicKey, string thumbprint = null)
         {
             var salt = GetRandomBytes(Aes.Create().KeySize / 8);
             var saltPart = Convert.ToBase64String(salt);
@@ -427,6 +427,114 @@ namespace Vespertan.Cryptography
         }
 
         #endregion
+
+        #region Signature
+
+        private static byte[] Sign(byte[] data, RSA privateKey)
+        {
+            var signature = privateKey.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            return signature;
+        }
+
+        private static bool VerifySign(byte[] data, RSA publicKey, byte[] signature)
+        {
+            var ok = publicKey.VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            return ok;
+        }
+
+        public static string GetSignCryptoString(string text, X509Certificate2 certificate2)
+        {
+            using var privateKey = certificate2.GetRSAPrivateKey();
+            return GetSignCryptoString(Encoding.UTF8.GetBytes(text), privateKey, certificate2.Thumbprint);
+        }
+
+        public static string GetSignCryptoString(string text, RSA privateKey, string thumbprint = null)
+        {
+            return GetSignCryptoString(Encoding.UTF8.GetBytes(text), privateKey, thumbprint);
+        }
+
+        public static string GetSignCryptoString(byte[] data, RSA privateKey, string thumbprint = null)
+        {
+            var dataPart = Convert.ToBase64String(data);
+            var sign = Sign(data, privateKey);
+            var signPart = Convert.ToBase64String(sign);
+
+            return $"${PasswordType.Sign}${dataPart}${signPart};{thumbprint}";
+        }
+
+        public static bool VerifySign(string cryptoString, RSA publicKey)
+        {
+            var parts = new HashParts(cryptoString);
+            if (parts.Type != PasswordType.Sign)
+            {
+                throw new InvalidOperationException();
+            }
+            var (sign, thumbprint) = GetSignDataParts(parts.Data);
+            return VerifySign(parts.Hash, publicKey, sign);
+        }
+
+        private static (byte[] sign, string thumbprint) GetSignDataParts(string data)
+        {
+            var dataParts = data.Split(';');
+            var sign = Convert.FromBase64String(dataParts[0]);
+            var thumbprint = dataParts[1];
+            return (sign, thumbprint);
+        }
+
+        public static bool VerifySign(string cryptoString, X509Certificate2 x509Certificate2)
+        {
+            var parts = new HashParts(cryptoString);
+            if (parts.Type != PasswordType.Cert)
+            {
+                throw new InvalidOperationException();
+            }
+            var (sign, thumbprint) = GetSignDataParts(parts.Data);
+            using var publicKey = x509Certificate2.GetRSAPublicKey();
+            return VerifySign(parts.Hash, publicKey, sign);
+        }
+
+        public static string GetSignText(string cryptoString, X509Certificate2 x509Certificate2)
+        {
+            var parts = new HashParts(cryptoString);
+            if (parts.Type != PasswordType.Sign)
+            {
+                throw new InvalidOperationException();
+            }
+            var (sign, thumbprint) = GetSignDataParts(parts.Data);
+            using var publicKey = x509Certificate2.GetRSAPublicKey();
+            var ok = VerifySign(parts.Hash, publicKey, sign);
+            if (ok)
+            {
+                return Encoding.UTF8.GetString(parts.Hash);
+            }
+            else
+            {
+                throw new InvalidOperationException("Signature verification failed");
+            }
+        }
+
+        public static byte[] GetSignData(string cryptoString, X509Certificate2 x509Certificate2)
+        {
+            var parts = new HashParts(cryptoString);
+            if (parts.Type != PasswordType.Sign)
+            {
+                throw new InvalidOperationException();
+            }
+            var (sign, thumbprint) = GetSignDataParts(parts.Data);
+            using var privateKey = x509Certificate2.GetRSAPrivateKey();
+            var ok = VerifySign(parts.Hash, privateKey, sign);
+            if (ok)
+            {
+                return parts.Hash;
+            }
+            else
+            {
+                throw new InvalidOperationException("Signature verification failed");
+            }
+        }
+
+        #endregion
+
 
         #endregion
 
