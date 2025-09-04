@@ -70,5 +70,16 @@ namespace Vespertan.Cryptography.Tests
             var roundtrip = CryptoStrings.DecryptAesText(cs, "pass");
             Assert.AreEqual(message, roundtrip);
         }
+
+        [TestMethod()]
+        public void DecryptTextTest()
+        {
+            var privCert = new X509Certificate2("cert_with_key.pfx", "0okm)OKM");
+            var pubCert = new X509Certificate2("certificate.crt");
+            var data = "testData";
+            var cryptoString = CryptoStrings.GetCertCryptoString(data, pubCert);
+            var outData = CryptoStrings.DecryptData(cryptoString, privateKey:privCert.GetRSAPrivateKey());
+            Assert.AreEqual(data, outData);
+        }
     }
 }

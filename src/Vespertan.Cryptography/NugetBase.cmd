@@ -1,4 +1,4 @@
-:: Version 1.10.0
+:: Version 1.11.0
 
 @echo off
 
@@ -78,10 +78,12 @@ if %errorlevel% NEQ 0 goto err
 if /I NOT [%useDefaultPrompt:~0,1%] == [y] set /P deletePackageAfterPush=Delete package file %projectName%.nupkg? (Yes/No)[%deletePackageAfterPush%]
 if /I [%deletePackageAfterPush:~0,1%] == [y] (del "%projectDir%\bin\%projectName%.nupkg")
 if %errorlevel% NEQ 0 goto err
+echo %date% %time%
 echo Success!
 goto end
 
 :err
+echo %date% %time%
 echo Error!
 pause
 :end

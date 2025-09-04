@@ -10,24 +10,103 @@ namespace Vespertan.Cryptography
     {
         public HashParts(string hash)
         {
-            var parts = hash.Split(new char[] { '$' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length == 3)
+            if (string.IsNullOrEmpty(hash))
             {
-                Type = (PasswordType)Enum.Parse(typeof(PasswordType), parts[0], ignoreCase: true);
-                Hash = Convert.FromBase64String(parts[1]);
-                Data = parts[2];
+                throw new ArgumentNullException(nameof(hash));
             }
-            else if (parts.Length == 2)
-            {
-                Type = (PasswordType)Enum.Parse(typeof(PasswordType), parts[0], ignoreCase: true);
-                Hash = Convert.FromBase64String(parts[1]);
-            }
-            else
+
+            if (hash[0] != '$')
             {
                 throw new InvalidOperationException("Invalid hash");
             }
+            var startOfHashindex = hash.IndexOf('$', 1);
+            if (startOfHashindex == -1)
+            {
+                throw new InvalidOperationException("Invalid hash");
+            }
+            var cryptoTypeString = hash.Substring(1, startOfHashindex - 1);
+            Type = (CryptoType)Enum.Parse(typeof(CryptoType), cryptoTypeString, ignoreCase: true);
+            if (Type == CryptoType.None)
+            {
+                Hash = Encoding.UTF8.GetBytes(hash.Substring(startOfHashindex + 1));
+            }
+            else
+            {
+                var startOfDataIndex = hash.IndexOf('$', startOfHashindex + 1);
+                if (startOfDataIndex != -1)
+                {
+                    Data = hash.Substring(startOfDataIndex + 1);
+                    Hash = Convert.FromBase64String(hash.Substring(startOfHashindex + 1, startOfDataIndex - startOfHashindex - 1));
+                }
+                else
+                {
+                    Data = null;
+                    Hash = Convert.FromBase64String(hash.Substring(startOfHashindex + 1));
+                }
+            }
         }
-        public PasswordType Type { get; set; }
+
+        public static bool IsValidHash(string hash)
+        {
+            if (string.IsNullOrEmpty(hash))
+            {
+                return false;
+            }
+
+            if (hash[0] != '$')
+            {
+                return false;
+            }
+            
+            var startOfHashindex = hash.IndexOf('$', 1);
+            if (startOfHashindex == -1)
+            {
+                return false;
+            }
+            
+            var cryptoTypeString = hash.Substring(1, startOfHashindex - 1);
+            if (!Enum.TryParse<CryptoType>(cryptoTypeString, ignoreCase: true, out var cryptoType))
+            {
+                return false;
+            }
+
+            if (cryptoType == CryptoType.None)
+            {
+                return true;
+            }
+            else
+            {
+                var startOfDataIndex = hash.IndexOf('$', startOfHashindex + 1);
+                if (startOfDataIndex != -1)
+                {
+                    var base64String = hash.Substring(startOfHashindex + 1, startOfDataIndex - startOfHashindex - 1);
+                    try
+                    {
+                        Convert.FromBase64String(base64String);
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    var base64String = hash.Substring(startOfHashindex + 1);
+                    try
+                    {
+                        Convert.FromBase64String(base64String);
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        public CryptoType Type { get; set; }
         public string Data { get; set; }
         public byte[] Hash { get; set; }
 

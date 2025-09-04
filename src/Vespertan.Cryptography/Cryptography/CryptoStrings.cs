@@ -148,7 +148,7 @@ namespace Vespertan.Cryptography
         {
             var data = Encoding.UTF8.GetBytes(password);
             var hash = HashMd5(data);
-            return $"${PasswordType.Md5}${Convert.ToBase64String(hash)}";
+            return $"${CryptoType.Md5}${Convert.ToBase64String(hash)}";
         }
 
         public static string GetMd5SaltedCryptoString(string password, int saltLength)
@@ -161,19 +161,25 @@ namespace Vespertan.Cryptography
         {
             var data = ConcateArray(Encoding.UTF8.GetBytes(password), salt);
             var hash = HashMd5(data);
-            return $"${PasswordType.Md5Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
+            return $"${CryptoType.Md5Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
         }
 
         public static string GetNoneCryptoString(string password)
         {
-            return $"${PasswordType.None}${password}";
+            return $"${CryptoType.None}${password}";
+        }
+
+        public static string GetNoneCryptoString(byte[] data)
+        {
+            var dataAsBase64 = Convert.ToBase64String(data);
+            return $"${CryptoType.NoneData}${dataAsBase64}";
         }
 
         public static string GetSha1CryptoString(string password)
         {
             var data = Encoding.UTF8.GetBytes(password);
             var hash = HashSha1(data);
-            return $"${PasswordType.Sha1}${Convert.ToBase64String(hash)}";
+            return $"${CryptoType.Sha1}${Convert.ToBase64String(hash)}";
         }
 
         public static string GetSha1SaltedCryptoString(string password, int saltLength)
@@ -186,14 +192,14 @@ namespace Vespertan.Cryptography
         {
             var data = ConcateArray(Encoding.UTF8.GetBytes(password), salt);
             var hash = HashSha1(data);
-            return $"${PasswordType.Sha1Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
+            return $"${CryptoType.Sha1Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
         }
 
         public static string GetSha256CryptoString(string password)
         {
             var data = Encoding.UTF8.GetBytes(password);
             var hash = HashSha256(data);
-            return $"${PasswordType.Sha256}${Convert.ToBase64String(hash)}";
+            return $"${CryptoType.Sha256}${Convert.ToBase64String(hash)}";
         }
 
         public static string GetSha256SaltedCryptoString(string password, int saltLength)
@@ -206,14 +212,14 @@ namespace Vespertan.Cryptography
         {
             var data = ConcateArray(Encoding.UTF8.GetBytes(password), salt);
             var hash = HashSha256(data);
-            return $"${PasswordType.Sha256Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
+            return $"${CryptoType.Sha256Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
         }
 
         public static string GetSha384CryptoString(string password)
         {
             var data = Encoding.UTF8.GetBytes(password);
             var hash = HashSha384(data);
-            return $"${PasswordType.Sha384}${Convert.ToBase64String(hash)}";
+            return $"${CryptoType.Sha384}${Convert.ToBase64String(hash)}";
         }
 
         public static string GetSha384SaltedCryptoString(string password, int saltLength)
@@ -226,14 +232,14 @@ namespace Vespertan.Cryptography
         {
             var data = ConcateArray(Encoding.UTF8.GetBytes(password), salt);
             var hash = HashSha384(data);
-            return $"${PasswordType.Sha384Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
+            return $"${CryptoType.Sha384Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
         }
 
         public static string GetSha512CryptoString(string password)
         {
             var data = Encoding.UTF8.GetBytes(password);
             byte[] hash = HashSha512(data);
-            return $"${PasswordType.Sha512}${Convert.ToBase64String(hash)}";
+            return $"${CryptoType.Sha512}${Convert.ToBase64String(hash)}";
         }
 
         public static string GetSha512SaltedCryptoString(string password)
@@ -246,7 +252,7 @@ namespace Vespertan.Cryptography
         {
             var data = ConcateArray(Encoding.UTF8.GetBytes(password), salt);
             byte[] hash = HashSha512(data);
-            return $"${PasswordType.Sha512Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
+            return $"${CryptoType.Sha512Salt}${Convert.ToBase64String(hash)}${Convert.ToBase64String(salt)}";
         }
 
         #region AES string
@@ -293,7 +299,7 @@ namespace Vespertan.Cryptography
         public static string GetAesCryptoString(byte[] data, byte[] password, byte[] salt)
         {
             var encryptedData = EncryptAes(data, password, ref salt);
-            return $"${PasswordType.Aes}${Convert.ToBase64String(encryptedData)}${Convert.ToBase64String(salt)}";
+            return $"${CryptoType.Aes}${Convert.ToBase64String(encryptedData)}${Convert.ToBase64String(salt)}";
         }
 
         public static string DecryptAesText(string cryptoString, string password)
@@ -303,6 +309,11 @@ namespace Vespertan.Cryptography
 
         public static string DecryptAesText(string cryptoString, byte[] password)
         {
+            if (cryptoString == null)
+            {
+                return null;
+            }
+
             return Encoding.UTF8.GetString(DecryptAesData(cryptoString, password));
         }
 
@@ -313,12 +324,94 @@ namespace Vespertan.Cryptography
 
         public static byte[] DecryptAesData(string cryptoString, byte[] password)
         {
+            if (cryptoString == null)
+            {
+                return null;
+            }
+
             var parts = new HashParts(cryptoString);
-            if (parts.Type != PasswordType.Aes)
+            if (parts.Type != CryptoType.Aes)
             {
                 throw new InvalidOperationException();
             }
             return DecryptAes(parts.Hash, password, parts.DataAsByteArray);
+        }
+
+        public static string DecryptText(string cryptoString, byte[] password)
+        {
+            return DecryptText(cryptoString, password, null);
+        }
+
+        public static string DecryptText(string cryptoString, string password)
+        {
+            return DecryptText(cryptoString, Encoding.UTF8.GetBytes(password), null);
+        }
+
+        public static string DecryptText(string cryptoString, string password, RSA privateKey)
+        {
+            return DecryptText(cryptoString, Encoding.UTF8.GetBytes(password), privateKey);
+        }
+
+        public static string DecryptText(string cryptoString, byte[] password, RSA privateKey)
+        {
+            if (cryptoString == null)
+            {
+                return null;
+            }
+            var data = DecryptData(cryptoString, password, privateKey);
+            return Encoding.UTF8.GetString(data);
+        }
+        
+        public static byte[] DecryptData(string cryptoString, RSA privateKey)
+        {
+            return DecryptData(cryptoString, (byte[])null, privateKey);
+        }
+
+        public static byte[] DecryptData(string cryptoString, string password, RSA privateKey)
+        {
+            var passwordAsBytes = password == null ? null : Encoding.UTF8.GetBytes(password);
+            return DecryptData(cryptoString, passwordAsBytes, privateKey);
+        }
+        public static byte[] DecryptData(string cryptoString, string password)
+        {
+            var passwordAsBytes = password == null ? null : Encoding.UTF8.GetBytes(password);
+            return DecryptData(cryptoString, passwordAsBytes, null);
+        }
+
+        public static byte[] DecryptData(string cryptoString, byte[] password)
+        {
+            return DecryptData(cryptoString, password, null);
+        }
+        public static byte[] DecryptData(string cryptoString, byte[] password, RSA privateKey)
+        {
+            if (cryptoString == null)
+            {
+                return null;
+            }
+
+            var parts = new HashParts(cryptoString);
+            switch (parts.Type)
+            {
+                case CryptoType.None:
+                case CryptoType.Sha1:
+                case CryptoType.Md5:
+                case CryptoType.Sha256:
+                case CryptoType.Sha384:
+                case CryptoType.Sha512:
+                case CryptoType.Sha1Salt:
+                case CryptoType.Md5Salt:
+                case CryptoType.Sha256Salt:
+                case CryptoType.Sha384Salt:
+                case CryptoType.Sha512Salt:
+                case CryptoType.Sign:
+                    return parts.Hash;
+                case CryptoType.Aes:
+                    return DecryptAes(parts.Hash, password, parts.DataAsByteArray);
+                case CryptoType.Cert:
+                    return DecryptCert(parts.Hash, privateKey);
+                default:
+                    throw new InvalidOperationException();
+            }
         }
 
         #endregion
@@ -358,7 +451,7 @@ namespace Vespertan.Cryptography
             var passwordEncrypted = EncryptCert(password, publicKey);
             var passwordPart = Convert.ToBase64String(passwordEncrypted);
 
-            return $"${PasswordType.Cert}${encryptedDataPart}${saltPart};{passwordPart};{thumbprint}";
+            return $"${CryptoType.Cert}${encryptedDataPart}${saltPart};{passwordPart};{thumbprint}";
         }
 
         public static byte[] DecryptCertData(byte[] hash, RSA privateKey, byte[] password, byte[] salt)
@@ -370,7 +463,7 @@ namespace Vespertan.Cryptography
         public static byte[] DecryptCertData(string cryptoString, RSA privateKey)
         {
             var parts = new HashParts(cryptoString);
-            if (parts.Type != PasswordType.Cert)
+            if (parts.Type != CryptoType.Cert)
             {
                 throw new InvalidOperationException();
             }
@@ -381,7 +474,7 @@ namespace Vespertan.Cryptography
         public static string DecryptCertText(string cryptoString, RSA privateKey)
         {
             var parts = new HashParts(cryptoString);
-            if (parts.Type != PasswordType.Cert)
+            if (parts.Type != CryptoType.Cert)
             {
                 throw new InvalidOperationException();
             }
@@ -404,7 +497,7 @@ namespace Vespertan.Cryptography
         public static byte[] DecryptCertData(string cryptoString, X509Certificate2 x509Certificate2)
         {
             var parts = new HashParts(cryptoString);
-            if (parts.Type != PasswordType.Cert)
+            if (parts.Type != CryptoType.Cert)
             {
                 throw new InvalidOperationException();
             }
@@ -416,7 +509,7 @@ namespace Vespertan.Cryptography
         public static string DecryptCertText(string cryptoString, X509Certificate2 x509Certificate2)
         {
             var parts = new HashParts(cryptoString);
-            if (parts.Type != PasswordType.Cert)
+            if (parts.Type != CryptoType.Cert)
             {
                 throw new InvalidOperationException();
             }
@@ -459,13 +552,13 @@ namespace Vespertan.Cryptography
             var sign = Sign(data, privateKey);
             var signPart = Convert.ToBase64String(sign);
 
-            return $"${PasswordType.Sign}${dataPart}${signPart};{thumbprint}";
+            return $"${CryptoType.Sign}${dataPart}${signPart};{thumbprint}";
         }
 
         public static bool VerifySign(string cryptoString, RSA publicKey)
         {
             var parts = new HashParts(cryptoString);
-            if (parts.Type != PasswordType.Sign)
+            if (parts.Type != CryptoType.Sign)
             {
                 throw new InvalidOperationException();
             }
@@ -484,7 +577,7 @@ namespace Vespertan.Cryptography
         public static bool VerifySign(string cryptoString, X509Certificate2 x509Certificate2)
         {
             var parts = new HashParts(cryptoString);
-            if (parts.Type != PasswordType.Cert)
+            if (parts.Type != CryptoType.Cert)
             {
                 throw new InvalidOperationException();
             }
@@ -496,7 +589,7 @@ namespace Vespertan.Cryptography
         public static string GetSignText(string cryptoString, X509Certificate2 x509Certificate2)
         {
             var parts = new HashParts(cryptoString);
-            if (parts.Type != PasswordType.Sign)
+            if (parts.Type != CryptoType.Sign)
             {
                 throw new InvalidOperationException();
             }
@@ -516,7 +609,7 @@ namespace Vespertan.Cryptography
         public static byte[] GetSignData(string cryptoString, X509Certificate2 x509Certificate2)
         {
             var parts = new HashParts(cryptoString);
-            if (parts.Type != PasswordType.Sign)
+            if (parts.Type != CryptoType.Sign)
             {
                 throw new InvalidOperationException();
             }
@@ -543,6 +636,11 @@ namespace Vespertan.Cryptography
             return new HashParts(cryptoString);
         }
 
+        public static bool IsValidCryptoString(string hash)
+        {
+            return HashParts.IsValidHash(hash);
+        }
+
         public static byte[] GetRandomBytes(int count)
         {
             byte[] randomData = new byte[count];
@@ -557,17 +655,18 @@ namespace Vespertan.Cryptography
             var passwordData = Encoding.UTF8.GetBytes(password);
             return hashParts.Type switch
             {
-                PasswordType.None => ArraysEquals(hashParts.Hash, passwordData),
-                PasswordType.Md5 => ArraysEquals(hashParts.Hash, HashMd5(passwordData)),
-                PasswordType.Md5Salt => ArraysEquals(hashParts.Hash, HashMd5(ConcateArray(passwordData, hashParts.DataAsByteArray))),
-                PasswordType.Sha1 => ArraysEquals(hashParts.Hash, HashSha1(passwordData)),
-                PasswordType.Sha1Salt => ArraysEquals(hashParts.Hash, HashSha1(ConcateArray(passwordData, hashParts.DataAsByteArray))),
-                PasswordType.Sha256 => ArraysEquals(hashParts.Hash, HashSha256(passwordData)),
-                PasswordType.Sha256Salt => ArraysEquals(hashParts.Hash, HashSha256(ConcateArray(passwordData, hashParts.DataAsByteArray))),
-                PasswordType.Sha384 => ArraysEquals(hashParts.Hash, HashSha384(passwordData)),
-                PasswordType.Sha384Salt => ArraysEquals(hashParts.Hash, HashSha384(ConcateArray(passwordData, hashParts.DataAsByteArray))),
-                PasswordType.Sha512 => ArraysEquals(hashParts.Hash, HashSha512(passwordData)),
-                PasswordType.Sha512Salt => ArraysEquals(hashParts.Hash, HashSha512(ConcateArray(passwordData, hashParts.DataAsByteArray))),
+                CryptoType.None => ArraysEquals(hashParts.Hash, passwordData),
+                CryptoType.NoneData => ArraysEquals(hashParts.Hash, passwordData),
+                CryptoType.Md5 => ArraysEquals(hashParts.Hash, HashMd5(passwordData)),
+                CryptoType.Md5Salt => ArraysEquals(hashParts.Hash, HashMd5(ConcateArray(passwordData, hashParts.DataAsByteArray))),
+                CryptoType.Sha1 => ArraysEquals(hashParts.Hash, HashSha1(passwordData)),
+                CryptoType.Sha1Salt => ArraysEquals(hashParts.Hash, HashSha1(ConcateArray(passwordData, hashParts.DataAsByteArray))),
+                CryptoType.Sha256 => ArraysEquals(hashParts.Hash, HashSha256(passwordData)),
+                CryptoType.Sha256Salt => ArraysEquals(hashParts.Hash, HashSha256(ConcateArray(passwordData, hashParts.DataAsByteArray))),
+                CryptoType.Sha384 => ArraysEquals(hashParts.Hash, HashSha384(passwordData)),
+                CryptoType.Sha384Salt => ArraysEquals(hashParts.Hash, HashSha384(ConcateArray(passwordData, hashParts.DataAsByteArray))),
+                CryptoType.Sha512 => ArraysEquals(hashParts.Hash, HashSha512(passwordData)),
+                CryptoType.Sha512Salt => ArraysEquals(hashParts.Hash, HashSha512(ConcateArray(passwordData, hashParts.DataAsByteArray))),
                 _ => throw new NotSupportedException(),
             };
         }
