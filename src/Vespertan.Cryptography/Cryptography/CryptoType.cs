@@ -19,5 +19,7 @@ namespace Vespertan.Cryptography
         Aes = 12,
         Cert = 13,
         Sign = 14,
+        Pbkdf2 = 15,
+        AesAuthenticated = 16,
     }
 }

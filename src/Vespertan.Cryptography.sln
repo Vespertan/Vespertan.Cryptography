@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vespertan.Cryptography", "V
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vespertan.CryptographyTests", "Vespertan.CryptographyTests\Vespertan.CryptographyTests.csproj", "{1DE6DB70-1F07-4554-BD50-246EA02A0912}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Vespertan.Cryptography.CompatibilityHost", "Vespertan.Cryptography.CompatibilityHost\Vespertan.Cryptography.CompatibilityHost.csproj", "{3FB00890-F199-4181-8C4D-0B81F64C9913}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{1DE6DB70-1F07-4554-BD50-246EA02A0912}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1DE6DB70-1F07-4554-BD50-246EA02A0912}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1DE6DB70-1F07-4554-BD50-246EA02A0912}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FB00890-F199-4181-8C4D-0B81F64C9913}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FB00890-F199-4181-8C4D-0B81F64C9913}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FB00890-F199-4181-8C4D-0B81F64C9913}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FB00890-F199-4181-8C4D-0B81F64C9913}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

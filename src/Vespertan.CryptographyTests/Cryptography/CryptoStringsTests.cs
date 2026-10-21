@@ -1,4 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Vespertan.Cryptography;
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,7 @@ namespace Vespertan.Cryptography.Tests
         [TestMethod()]
         public void GetCertStringTest()
         {
-            var cert = new X509Certificate2("cert_with_key.pfx", "0okm)OKM");
+            var cert = TestCertificates.LoadPrivate();
             var data = "testData";
             var cryptoString = CryptoStrings.GetCertCryptoString(data, cert);
             var outData = CryptoStrings.DecryptCertText(cryptoString, cert);
@@ -25,8 +25,8 @@ namespace Vespertan.Cryptography.Tests
         [TestMethod()]
         public void GetCertStringTest2()
         {
-            var cert = new X509Certificate2("cert_with_key.pfx", "0okm)OKM");
-            var cert2 = new X509Certificate2("certificate.crt");
+            var cert = TestCertificates.LoadPrivate();
+            var cert2 = TestCertificates.LoadPublic();
             var data = "testData";
             var cryptoString = CryptoStrings.GetCertCryptoString(data, cert2);
             var outData = CryptoStrings.DecryptCertText(cryptoString, cert);
@@ -36,8 +36,8 @@ namespace Vespertan.Cryptography.Tests
         [TestMethod()]
         public void GetSignStringTest()
         {
-            var privCert = new X509Certificate2("cert_with_key.pfx", "0okm)OKM");
-            var pubCert = new X509Certificate2("certificate.crt");
+            var privCert = TestCertificates.LoadPrivate();
+            var pubCert = TestCertificates.LoadPublic();
             var data = "testData";
             var cryptoString = CryptoStrings.GetSignCryptoString(data, privCert);
             var outData = CryptoStrings.GetSignText(cryptoString, pubCert);
@@ -74,12 +74,17 @@ namespace Vespertan.Cryptography.Tests
         [TestMethod()]
         public void DecryptTextTest()
         {
-            var privCert = new X509Certificate2("cert_with_key.pfx", "0okm)OKM");
-            var pubCert = new X509Certificate2("certificate.crt");
-            var data = "testData";
-            var cryptoString = CryptoStrings.GetCertCryptoString(data, pubCert);
-            var outData = CryptoStrings.DecryptData(cryptoString, privateKey:privCert.GetRSAPrivateKey());
-            Assert.AreEqual(data, outData);
+            using (var privCert = TestCertificates.LoadPrivate())
+            using (var pubCert = TestCertificates.LoadPublic())
+            using (var privateKey = privCert.GetRSAPrivateKey())
+            {
+                var data = "testData — zażółć 🔐";
+                var cryptoString = CryptoStrings.GetCertCryptoString(data, pubCert);
+                var outData = CryptoStrings.DecryptData(cryptoString, privateKey);
+                CollectionAssert.AreEqual(Encoding.UTF8.GetBytes(data), outData);
+                Assert.AreEqual(data, CryptoStrings.DecryptText(cryptoString, (byte[])null, privateKey));
+                Assert.AreEqual(data, CryptoStrings.DecryptText(cryptoString, (string)null, privateKey));
+            }
         }
     }
 }

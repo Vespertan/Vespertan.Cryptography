@@ -1,20 +1,21 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 
 namespace Vespertan.Cryptography
 {
-    public static class CryptoStrings
+    public static partial class CryptoStrings
     {
 
         #region Hash
 
         public static byte[] HashMd5(byte[] data)
         {
-            using var hashAlg = HashAlgorithm.Create(HashAlgorithmName.MD5.Name);
+            using var hashAlg = MD5.Create();
             return hashAlg.ComputeHash(data);
         }
 
@@ -25,7 +26,7 @@ namespace Vespertan.Cryptography
 
         public static byte[] HashSha1(byte[] data)
         {
-            using var hashAlg = HashAlgorithm.Create(HashAlgorithmName.SHA1.Name);
+            using var hashAlg = SHA1.Create();
             return hashAlg.ComputeHash(data);
         }
 
@@ -36,7 +37,7 @@ namespace Vespertan.Cryptography
 
         public static byte[] HashSha256(byte[] data)
         {
-            using var hashAlg = HashAlgorithm.Create(HashAlgorithmName.SHA256.Name);
+            using var hashAlg = SHA256.Create();
             return hashAlg.ComputeHash(data);
         }
 
@@ -47,7 +48,7 @@ namespace Vespertan.Cryptography
 
         public static byte[] HashSha384(byte[] data)
         {
-            using var hashAlg = HashAlgorithm.Create(HashAlgorithmName.SHA384.Name);
+            using var hashAlg = SHA384.Create();
             return hashAlg.ComputeHash(data);
         }
 
@@ -58,7 +59,7 @@ namespace Vespertan.Cryptography
 
         public static byte[] HashSha512(byte[] data)
         {
-            using var hashAlg = HashAlgorithm.Create(HashAlgorithmName.SHA512.Name);
+            using var hashAlg = SHA512.Create();
             return hashAlg.ComputeHash(data);
         }
 
@@ -304,6 +305,8 @@ namespace Vespertan.Cryptography
 
         public static string DecryptAesText(string cryptoString, string password)
         {
+            if (UsesAuthenticatedAesFormat(cryptoString))
+                return DecryptAuthenticatedAesText(cryptoString, password);
             return DecryptAesText(cryptoString, Encoding.UTF8.GetBytes(password));
         }
 
@@ -319,11 +322,15 @@ namespace Vespertan.Cryptography
 
         public static byte[] DecryptAesData(string cryptoString, string password)
         {
+            if (UsesAuthenticatedAesFormat(cryptoString))
+                return DecryptAuthenticatedAesData(cryptoString, password);
             return DecryptAesData(cryptoString, Encoding.UTF8.GetBytes(password));
         }
 
         public static byte[] DecryptAesData(string cryptoString, byte[] password)
         {
+            if (UsesAuthenticatedAesFormat(cryptoString))
+                return DecryptAuthenticatedAesFromUtf8(cryptoString, password);
             if (cryptoString == null)
             {
                 return null;
@@ -344,12 +351,14 @@ namespace Vespertan.Cryptography
 
         public static string DecryptText(string cryptoString, string password)
         {
-            return DecryptText(cryptoString, Encoding.UTF8.GetBytes(password), null);
+            return DecryptText(cryptoString, password, null);
         }
 
         public static string DecryptText(string cryptoString, string password, RSA privateKey)
         {
-            return DecryptText(cryptoString, Encoding.UTF8.GetBytes(password), privateKey);
+            if (UsesAuthenticatedAesFormat(cryptoString))
+                return DecryptAuthenticatedAesText(cryptoString, password);
+            return DecryptText(cryptoString, password == null ? null : Encoding.UTF8.GetBytes(password), privateKey);
         }
 
         public static string DecryptText(string cryptoString, byte[] password, RSA privateKey)
@@ -369,21 +378,26 @@ namespace Vespertan.Cryptography
 
         public static byte[] DecryptData(string cryptoString, string password, RSA privateKey)
         {
+            if (UsesAuthenticatedAesFormat(cryptoString))
+                return DecryptAuthenticatedAesData(cryptoString, password);
             var passwordAsBytes = password == null ? null : Encoding.UTF8.GetBytes(password);
             return DecryptData(cryptoString, passwordAsBytes, privateKey);
         }
         public static byte[] DecryptData(string cryptoString, string password)
         {
-            var passwordAsBytes = password == null ? null : Encoding.UTF8.GetBytes(password);
-            return DecryptData(cryptoString, passwordAsBytes, null);
+            return DecryptData(cryptoString, password, null);
         }
 
         public static byte[] DecryptData(string cryptoString, byte[] password)
         {
             return DecryptData(cryptoString, password, null);
         }
+        /// <summary>Decrypts encrypted records or extracts hash data.</summary>
+        /// <remarks>Sign records require a trusted RSA verification key in privateKey and are verified before returning data.</remarks>
         public static byte[] DecryptData(string cryptoString, byte[] password, RSA privateKey)
         {
+            if (UsesAuthenticatedAesFormat(cryptoString))
+                return DecryptAuthenticatedAesFromUtf8(cryptoString, password);
             if (cryptoString == null)
             {
                 return null;
@@ -403,12 +417,14 @@ namespace Vespertan.Cryptography
                 case CryptoType.Sha256Salt:
                 case CryptoType.Sha384Salt:
                 case CryptoType.Sha512Salt:
-                case CryptoType.Sign:
+                case CryptoType.Pbkdf2:
                     return parts.Hash;
+                case CryptoType.Sign:
+                    return GetSignData(cryptoString, privateKey);
                 case CryptoType.Aes:
                     return DecryptAes(parts.Hash, password, parts.DataAsByteArray);
                 case CryptoType.Cert:
-                    return DecryptCert(parts.Hash, privateKey);
+                    return DecryptCertData(cryptoString, privateKey);
                 default:
                     throw new InvalidOperationException();
             }
@@ -420,19 +436,21 @@ namespace Vespertan.Cryptography
 
         private static byte[] EncryptCert(byte[] data, RSA publicKey)
         {
+            if (publicKey == null) throw new ArgumentNullException(nameof(publicKey));
             byte[] encryptedKey = publicKey.Encrypt(data, RSAEncryptionPadding.OaepSHA1);
             return encryptedKey;
         }
 
         private static byte[] DecryptCert(byte[] data, RSA privateKey)
         {
+            if (privateKey == null) throw new ArgumentNullException(nameof(privateKey));
             byte[] decryptedValue = privateKey.Decrypt(data, RSAEncryptionPadding.OaepSHA1);
             return decryptedValue;
         }
 
         public static string GetCertCryptoString(string text, X509Certificate2 certificate2)
         {
-            using var rsa = certificate2.GetRSAPublicKey();
+            using var rsa = GetCertificatePublicKey(certificate2);
             return GetCertCryptoString(Encoding.UTF8.GetBytes(text), rsa, certificate2.Thumbprint);
         }
 
@@ -457,7 +475,14 @@ namespace Vespertan.Cryptography
         public static byte[] DecryptCertData(byte[] hash, RSA privateKey, byte[] password, byte[] salt)
         {
             byte[] passwordDecrypted = DecryptCert(password, privateKey);
-            return DecryptAes(hash, passwordDecrypted, salt);
+            try
+            {
+                return DecryptAes(hash, passwordDecrypted, salt);
+            }
+            finally
+            {
+                Array.Clear(passwordDecrypted, 0, passwordDecrypted.Length);
+            }
         }
 
         public static byte[] DecryptCertData(string cryptoString, RSA privateKey)
@@ -473,21 +498,14 @@ namespace Vespertan.Cryptography
 
         public static string DecryptCertText(string cryptoString, RSA privateKey)
         {
-            var parts = new HashParts(cryptoString);
-            if (parts.Type != CryptoType.Cert)
-            {
-                throw new InvalidOperationException();
-            }
-
-            var (salt, encyptedPassword, _) = GetCertDataParts(parts.Data);
-            var data = DecryptCertData(parts.Hash, privateKey, encyptedPassword, salt);
-
-            return Encoding.UTF8.GetString(data);
+            return Encoding.UTF8.GetString(DecryptCertData(cryptoString, privateKey));
         }
 
         private static (byte[] salt, byte[] encyptedPassword, string thumbprint) GetCertDataParts(string data)
         {
-            var dataParts = data.Split(';');
+            var dataParts = data?.Split(new[] { ';' }, 3);
+            if (dataParts == null || dataParts.Length != 3)
+                throw new FormatException("Invalid certificate metadata.");
             var salt = Convert.FromBase64String(dataParts[0]);
             var password = Convert.FromBase64String(dataParts[1]);
             var thumbprint = dataParts[2];
@@ -496,27 +514,27 @@ namespace Vespertan.Cryptography
 
         public static byte[] DecryptCertData(string cryptoString, X509Certificate2 x509Certificate2)
         {
-            var parts = new HashParts(cryptoString);
-            if (parts.Type != CryptoType.Cert)
-            {
-                throw new InvalidOperationException();
-            }
-            var (salt, encyptedPassword, _) = GetCertDataParts(parts.Data);
-            using var privateKey = x509Certificate2.GetRSAPrivateKey();
-            return DecryptCertData(parts.Hash, privateKey, encyptedPassword, salt);
+            using var privateKey = GetCertificatePrivateKey(x509Certificate2);
+            return DecryptCertData(cryptoString, privateKey);
         }
 
         public static string DecryptCertText(string cryptoString, X509Certificate2 x509Certificate2)
         {
-            var parts = new HashParts(cryptoString);
-            if (parts.Type != CryptoType.Cert)
-            {
-                throw new InvalidOperationException();
-            }
-            var (salt, encyptedPassword, _) = GetCertDataParts(parts.Data);
-            using var privateKey = x509Certificate2.GetRSAPrivateKey();
-            var data = DecryptCertData(parts.Hash, privateKey, encyptedPassword, salt);
-            return Encoding.UTF8.GetString(data);
+            return Encoding.UTF8.GetString(DecryptCertData(cryptoString, x509Certificate2));
+        }
+
+        private static RSA GetCertificatePublicKey(X509Certificate2 certificate)
+        {
+            if (certificate == null) throw new ArgumentNullException(nameof(certificate));
+            return certificate.GetRSAPublicKey()
+                ?? throw new CryptographicException("An RSA public key is required.");
+        }
+
+        private static RSA GetCertificatePrivateKey(X509Certificate2 certificate)
+        {
+            if (certificate == null) throw new ArgumentNullException(nameof(certificate));
+            return certificate.GetRSAPrivateKey()
+                ?? throw new CryptographicException("An RSA private key is required.");
         }
 
         #endregion
@@ -525,19 +543,21 @@ namespace Vespertan.Cryptography
 
         private static byte[] Sign(byte[] data, RSA privateKey)
         {
+            if (privateKey == null) throw new ArgumentNullException(nameof(privateKey));
             var signature = privateKey.SignData(data, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             return signature;
         }
 
         private static bool VerifySign(byte[] data, RSA publicKey, byte[] signature)
         {
+            if (publicKey == null) throw new ArgumentNullException(nameof(publicKey));
             var ok = publicKey.VerifyData(data, signature, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
             return ok;
         }
 
         public static string GetSignCryptoString(string text, X509Certificate2 certificate2)
         {
-            using var privateKey = certificate2.GetRSAPrivateKey();
+            using var privateKey = GetCertificatePrivateKey(certificate2);
             return GetSignCryptoString(Encoding.UTF8.GetBytes(text), privateKey, certificate2.Thumbprint);
         }
 
@@ -568,7 +588,9 @@ namespace Vespertan.Cryptography
 
         private static (byte[] sign, string thumbprint) GetSignDataParts(string data)
         {
-            var dataParts = data.Split(';');
+            var dataParts = data?.Split(new[] { ';' }, 2);
+            if (dataParts == null || dataParts.Length != 2)
+                throw new FormatException("Invalid signature metadata.");
             var sign = Convert.FromBase64String(dataParts[0]);
             var thumbprint = dataParts[1];
             return (sign, thumbprint);
@@ -576,37 +598,23 @@ namespace Vespertan.Cryptography
 
         public static bool VerifySign(string cryptoString, X509Certificate2 x509Certificate2)
         {
-            var parts = new HashParts(cryptoString);
-            if (parts.Type != CryptoType.Cert)
-            {
-                throw new InvalidOperationException();
-            }
-            var (sign, thumbprint) = GetSignDataParts(parts.Data);
-            using var publicKey = x509Certificate2.GetRSAPublicKey();
-            return VerifySign(parts.Hash, publicKey, sign);
+            using var publicKey = GetCertificatePublicKey(x509Certificate2);
+            return VerifySign(cryptoString, publicKey);
         }
 
         public static string GetSignText(string cryptoString, X509Certificate2 x509Certificate2)
         {
-            var parts = new HashParts(cryptoString);
-            if (parts.Type != CryptoType.Sign)
-            {
-                throw new InvalidOperationException();
-            }
-            var (sign, thumbprint) = GetSignDataParts(parts.Data);
-            using var publicKey = x509Certificate2.GetRSAPublicKey();
-            var ok = VerifySign(parts.Hash, publicKey, sign);
-            if (ok)
-            {
-                return Encoding.UTF8.GetString(parts.Hash);
-            }
-            else
-            {
-                throw new InvalidOperationException("Signature verification failed");
-            }
+            return Encoding.UTF8.GetString(GetSignData(cryptoString, x509Certificate2));
         }
 
         public static byte[] GetSignData(string cryptoString, X509Certificate2 x509Certificate2)
+        {
+            using var publicKey = GetCertificatePublicKey(x509Certificate2);
+            return GetSignData(cryptoString, publicKey);
+        }
+
+        /// <summary>Returns signed data only after verifying it with the caller's trusted RSA public key.</summary>
+        public static byte[] GetSignData(string cryptoString, RSA publicKey)
         {
             var parts = new HashParts(cryptoString);
             if (parts.Type != CryptoType.Sign)
@@ -614,8 +622,7 @@ namespace Vespertan.Cryptography
                 throw new InvalidOperationException();
             }
             var (sign, thumbprint) = GetSignDataParts(parts.Data);
-            using var privateKey = x509Certificate2.GetRSAPrivateKey();
-            var ok = VerifySign(parts.Hash, privateKey, sign);
+            var ok = VerifySign(parts.Hash, publicKey, sign);
             if (ok)
             {
                 return parts.Hash;
@@ -644,13 +651,18 @@ namespace Vespertan.Cryptography
         public static byte[] GetRandomBytes(int count)
         {
             byte[] randomData = new byte[count];
-            using var rngCsp = new RNGCryptoServiceProvider();
+            using var rngCsp = RandomNumberGenerator.Create();
             rngCsp.GetBytes(randomData);
             return randomData;
         }
 
         public static bool ValidatePasswordString(string password, string cryptoString)
         {
+            if (cryptoString != null && cryptoString.StartsWith(Pbkdf2Prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return VerifyPbkdf2CryptoString(password, cryptoString);
+            }
+
             var hashParts = new HashParts(cryptoString);
             var passwordData = Encoding.UTF8.GetBytes(password);
             return hashParts.Type switch
@@ -671,6 +683,10 @@ namespace Vespertan.Cryptography
             };
         }
 
+        // .NET Framework has no CryptographicOperations.FixedTimeEquals.
+#if NET48
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+#endif
         internal static bool ArraysEquals(byte[] a, byte[] b)
         {
             if (a == null || b == null)
@@ -681,17 +697,16 @@ namespace Vespertan.Cryptography
             {
                 return false;
             }
-            else
+#if NET48
+            var difference = 0;
+            for (int i = 0; i < a.Length; i++)
             {
-                for (int i = 0; i < a.Length; i++)
-                {
-                    if (a[i] != b[i])
-                    {
-                        return false;
-                    }
-                }
+                difference |= a[i] ^ b[i];
             }
-            return true;
+            return difference == 0;
+#else
+            return CryptographicOperations.FixedTimeEquals(a, b);
+#endif
         }
 
         internal static byte[] ConcateArray(byte[] a, byte[] b)

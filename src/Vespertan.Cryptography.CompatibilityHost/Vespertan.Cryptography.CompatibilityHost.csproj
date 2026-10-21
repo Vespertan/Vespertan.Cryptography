@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net48;net10.0</TargetFrameworks>
+    <LangVersion>12.0</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Vespertan.CryptographyTests\TestCertificates.cs" Link="TestCertificates.cs" />
+    <ProjectReference Include="..\Vespertan.Cryptography\Vespertan.Cryptography.csproj" />
+    <None Include="..\Vespertan.CryptographyTests\cert_with_key.pfx" Link="cert_with_key.pfx" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Vespertan.CryptographyTests\certificate.crt" Link="certificate.crt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

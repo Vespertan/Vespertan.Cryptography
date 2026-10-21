@@ -26,6 +26,21 @@ namespace Vespertan.Cryptography
             }
             var cryptoTypeString = hash.Substring(1, startOfHashindex - 1);
             Type = (CryptoType)Enum.Parse(typeof(CryptoType), cryptoTypeString, ignoreCase: true);
+            if (Type == CryptoType.AesAuthenticated)
+            {
+                if (!CryptoStrings.TryReadAuthenticatedAes(hash, out var envelope, out _))
+                    throw new FormatException("Invalid authenticated AES record.");
+                Hash = envelope;
+                return;
+            }
+            if (Type == CryptoType.Pbkdf2)
+            {
+                if (!CryptoStrings.TryReadPbkdf2(hash, out var derivedKey, out _, out _))
+                    throw new FormatException("Invalid PBKDF2 record.");
+                Hash = derivedKey;
+                Data = hash.Substring(hash.IndexOf('$', startOfHashindex + 1) + 1);
+                return;
+            }
             if (Type == CryptoType.None)
             {
                 Hash = Encoding.UTF8.GetBytes(hash.Substring(startOfHashindex + 1));
@@ -70,6 +85,14 @@ namespace Vespertan.Cryptography
                 return false;
             }
 
+            if (cryptoType == CryptoType.Pbkdf2)
+            {
+                return CryptoStrings.TryReadPbkdf2(hash, out _, out _, out _);
+            }
+            if (cryptoType == CryptoType.AesAuthenticated)
+            {
+                return CryptoStrings.TryReadAuthenticatedAes(hash, out _, out _);
+            }
             if (cryptoType == CryptoType.None)
             {
                 return true;
