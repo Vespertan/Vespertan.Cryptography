@@ -184,6 +184,37 @@ valid record encrypted with the same password; bind application identity/context
 inside the plaintext and verify it when needed. Password strength still determines
 resistance to offline guessing. Stored ciphertext needs no secret salt or IV.
 
+## Authenticated encryption with an existing random key
+
+`GenerateAuthenticatedAesKey()` returns 64 random bytes (separate 32-byte AES
+and HMAC keys). `EncryptAuthenticatedAesWithKey(data, key, associatedData)` and
+`DecryptAuthenticatedAesWithKey(record, key, associatedData)` support the same
+wire format on net48 and net10.0. A fresh random IV is generated on every write.
+Use a generated key, never a password or a padded password. Inputs are borrowed,
+not modified, and must not be changed concurrently. Clear owned keys and returned
+plaintext when finished.
+
+The binary envelope is `version=01 (1) || IV (16) || AES-256-CBC/PKCS7 ciphertext
+(positive multiple of 16) || HMAC-SHA256 (32)`. HMAC input is ASCII
+`Vespertan.KeyedAes.v1\0`, followed by the AAD length as UInt32 big-endian,
+the exact AAD, and the envelope excluding its tag. The trailing `\0` in the domain
+is one NUL byte. Authentication is checked before AES decryption; the keys are
+independent halves of the random 64-byte key. This is the same encrypt-then-MAC
+construction used above, with domain separation and AAD instead of password KDF.
+
+Maximum plaintext is 16 MiB, maximum AAD 18 MiB. Empty plaintext/AAD are allowed.
+Wrong tags, unsupported versions and malformed records throw
+`CryptographicException` with the fixed message `Invalid keyed AES record.`
+(including authenticated records with invalid padding); invalid API arguments
+throw argument exceptions. No
+fallback or automatic format dispatch occurs. This new binary API does not
+change any existing string API or serialized format. Context binding and
+replay/rollback protection remain application responsibilities.
+
+This construction does not promise key commitment if callers deliberately share
+the HMAC half between different AES keys. Generate a fresh complete key for each
+independent context; do not construct keys by reusing individual halves.
+
 ## Certificates and signatures
 
 Existing `$Cert$` and `$Sign$` records remain readable. Certificate encryption

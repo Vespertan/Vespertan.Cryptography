@@ -162,8 +162,8 @@ namespace Vespertan.Cryptography.Tests
             {
                 wrongKey.KeySize = 2048;
                 var encrypted = Fixture("legacy-cert.txt");
-                Assert.ThrowsException<CryptographicException>(() => CryptoStrings.DecryptCertData(encrypted, wrongKey));
-                Assert.ThrowsException<CryptographicException>(() => CryptoStrings.DecryptData(encrypted, wrongKey));
+                AssertCryptographicFailure(() => CryptoStrings.DecryptCertData(encrypted, wrongKey));
+                AssertCryptographicFailure(() => CryptoStrings.DecryptData(encrypted, wrongKey));
                 // Forged metadata cannot make an unrelated signature trusted.
                 var signed = CryptoStrings.GetSignCryptoString("message", wrongKey, publicCertificate.Thumbprint);
                 Assert.IsFalse(CryptoStrings.VerifySign(signed, publicCertificate));
@@ -189,6 +189,14 @@ namespace Vespertan.Cryptography.Tests
             Assert.ThrowsException<CryptographicException>(() => CryptoStrings.GetSignCryptoString("message", publicCertificate));
             // Explicit unverified extraction stays available and makes no authentication claim.
             Assert.AreEqual(256, CryptoStrings.GetHashParts(signed).Hash.Length);
+        }
+
+        private static void AssertCryptographicFailure(Action action)
+        {
+            // RSAOpenSsl reports a derived CryptographicException; MSTest v2 ThrowsException requires an exact type.
+            try { action(); }
+            catch (CryptographicException) { return; }
+            Assert.Fail("The operation must reject the wrong RSA key with a cryptographic failure.");
         }
 
         [TestMethod]
